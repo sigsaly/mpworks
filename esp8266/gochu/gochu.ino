@@ -1,18 +1,35 @@
 #include <ESP8266WiFi.h>
- 
+
+#define ND_D0 16
+#define ND_D1 5
+#define ND_D2 4
+#define ND_D3 0
+#define ND_D4 2
+#define ND_D5 14
+#define ND_D6 12
+#define ND_D7 13
+#define ND_D8 15
+#define ND_RX 3
+#define ND_TX 1 
+#define ND_S2 10
+#define ND_S3 9
+
 const char* ssid = "";
 const char* password = "";
 
 WiFiServer server(80);
 
-int LED_pin = 2;
-int motor1_pin = 0;
-int motor2_pin = 14;
+
+int water_sense_pin = ND_D2;
+int LED_pin = ND_D4;
+int motor1_pin = ND_D3;
+int motor2_pin = ND_D5;
 int led_turn_on = 0;
 int led_turn_off = 1;
 int motor_turn_on = 1;
 int motor_turn_off = 0;
-
+int water_sense_value = 0;
+  
 void setup() {
   Serial.begin(115200);
   delay(10);  
@@ -20,6 +37,8 @@ void setup() {
   pinMode(LED_pin, OUTPUT);
   pinMode(motor1_pin, OUTPUT);
   pinMode(motor2_pin, OUTPUT);
+  pinMode(water_sense_pin, INPUT);
+  
   digitalWrite(LED_pin, led_turn_off);    
   digitalWrite(motor1_pin, motor_turn_off);
   digitalWrite(motor2_pin, motor_turn_off);
@@ -51,12 +70,17 @@ void setup() {
 }
 
 void loop() {
+
+  water_sense_value = digitalRead(water_sense_pin);
+  Serial.print("water_sense_value:");
+  Serial.println(water_sense_value);  
+
   // Check if a client has connected
   WiFiClient client = server.available();
   if (!client) {
     return;
   }
-
+  
   // Wait until the client sends some data
   Serial.println("new client");
   while(!client.available()){
@@ -69,26 +93,24 @@ void loop() {
   client.flush();
   
   // Match the request
-  //int value = led_turn_off;
+  
   if (request.indexOf("/MT1=OFF") != -1)  {
     digitalWrite(motor1_pin, motor_turn_off);
     digitalWrite(LED_pin, led_turn_off);   
-    //value = turn_on;
   }
   if (request.indexOf("/MT1=ON") != -1)  {
-    digitalWrite(motor1_pin, motor_turn_on);
+    if (water_sense_value)
+      digitalWrite(motor1_pin, motor_turn_on);
     digitalWrite(LED_pin, led_turn_on);       
-    //value = turn_off;
   }
   if (request.indexOf("/MT2=OFF") != -1)  {
     digitalWrite(motor2_pin, motor_turn_off);
     digitalWrite(LED_pin, led_turn_off);       
-    //value = turn_on;
   }
   if (request.indexOf("/MT2=ON") != -1)  {
-    digitalWrite(motor2_pin, motor_turn_on);
+    if (water_sense_value)
+      digitalWrite(motor2_pin, motor_turn_on);
     digitalWrite(LED_pin, led_turn_on);       
-    //value = turn_off;
   }  
   
   // Return the response
@@ -97,13 +119,12 @@ void loop() {
   client.println(""); //  do not forget this one
   client.println("<!DOCTYPE HTML>");
   client.println("<html>");
-  client.print("How about watering?");
 
-  //if(value == turn_on) {
-  //  client.print("On");
-  //} else {
-  //  client.print("Off");
-  //}
+  if (water_sense_value)
+    client.print("How about watering?");
+  else
+    client.print("No water. Fill the water first");
+    
   client.println("<br><br>");
   client.println("<a href=\"/MT1=OFF\"\"><button>Motor1 Off </button></a>");
   client.println("<a href=\"/MT1=ON\"\"><button>Motor1 On </button></a><br />"); 
