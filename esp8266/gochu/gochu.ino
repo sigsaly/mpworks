@@ -72,8 +72,8 @@ void setup() {
 void loop() {
 
   water_sense_value = digitalRead(water_sense_pin);
-  Serial.print("water_sense_value:");
-  Serial.println(water_sense_value);  
+  //Serial.print("water_sense_value:");
+  //Serial.println(water_sense_value);  
 
   // Check if a client has connected
   WiFiClient client = server.available();
@@ -119,11 +119,16 @@ void loop() {
   client.println(""); //  do not forget this one
   client.println("<!DOCTYPE HTML>");
   client.println("<html>");
-
+  client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+  client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+  client.println(".button { background-color: #4caf50; border: none; color: white; padding: 15px 32px;");
+  client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
+  client.println("</style></head>");
+  
   if (water_sense_value)
-    client.print("How about watering?");
+    client.print("<body><h1>How about watering?</h1>");
   else
-    client.print("No water. Fill the water first");
+    client.print("<body><h1>No water. Fill the water first</h1>");
     
   client.println("<br><br>");
   client.println("<a href=\"/MT1=OFF\"\"><button>Motor1 Off </button></a>");
@@ -131,7 +136,7 @@ void loop() {
   client.println("<br><br>");
   client.println("<a href=\"/MT2=OFF\"\"><button>Motor2 Off </button></a>");
   client.println("<a href=\"/MT2=ON\"\"><button>Motor2 On </button></a><br />");   
-  client.println("</html>");
+  client.println("</body></html>");
   delay(1);
   Serial.println("Client disonnected");
   Serial.println("");
